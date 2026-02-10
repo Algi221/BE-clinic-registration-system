@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  PATIENT
+}
+
+enum RegistrationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model User {
+  id           String        @id @default(uuid())
+  name         String
+  email        String        @unique
+  password     String
+  role         Role          @default(PATIENT)
+  pendaftaran  Pendaftaran[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Poli {
+  id        String   @id @default(uuid())
+  nama      String
+  deskripsi String?
+  dokters   Dokter[]
+}
+
+model Dokter {
+  id         String         @id @default(uuid())
+  nama       String
+  spesialis  String
+  poliId     String
+  poli       Poli           @relation(fields: [poliId], references: [id])
+  jadwals    JadwalDokter[]
+}
+
+model JadwalDokter {
+  id           String        @id @default(uuid())
+  dokterId     String
+  dokter       Dokter        @relation(fields: [dokterId], references: [id])
+  hari         String
+  jamMulai     String
+  jamSelesai   String
+  pendaftaran  Pendaftaran[]
+}
+
+model Pendaftaran {
+  id                 String             @id @default(uuid())
+  pasienId           String
+  pasien             User               @relation(fields: [pasienId], references: [id])
+  jadwalId           String
+  jadwal             JadwalDokter       @relation(fields: [jadwalId], references: [id])
+  keluhan            String?
+  status             RegistrationStatus @default(PENDING)
+  tanggalPendaftaran DateTime           @default(now())
+  createdAt          DateTime           @default(now())
+}
