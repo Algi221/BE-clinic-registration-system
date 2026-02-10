@@ -25,6 +25,7 @@ model User {
   password     String
   role         Role          @default(PATIENT)
   pendaftaran  Pendaftaran[]
+  dokter       Dokter?       // Optional: jika role DOCTOR, akan ada dokter profile
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 }
@@ -38,6 +39,8 @@ model Poli {
 
 model Dokter {
   id         String         @id @default(uuid())
+  userId     String         @unique // Link ke User account (email dokter)
+  user       User           @relation(fields: [userId], references: [id])
   nama       String
   spesialis  String
   poliId     String

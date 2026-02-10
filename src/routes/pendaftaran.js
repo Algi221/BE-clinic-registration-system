@@ -7,12 +7,38 @@ const {
   emitRegistrationStatusUpdate,
 } = require("../utils/socketEmitter");
 
-// Get all registrations (Filtered by role)
+// Get all registrations (Filtered by role & poli)
 router.get("/", authMiddleware, async (req, res) => {
   try {
     let where = {};
+
+    // PATIENT: only their own registrations
     if (req.user.role === "PATIENT") {
       where = { pasienId: req.user.id };
+    }
+
+    // DOCTOR: only registrations from their poli
+    if (req.user.role === "DOCTOR") {
+      // Get doctor profile to find their poli
+      const dokter = await prisma.dokter.findUnique({
+        where: { userId: req.user.id },
+        select: { poliId: true },
+      });
+
+      if (!dokter) {
+        return res.status(403).json({
+          message: "Dokter profile not found",
+        });
+      }
+
+      // Filter: only registrations where jadwal.dokter.poliId matches
+      where = {
+        jadwal: {
+          dokter: {
+            poliId: dokter.poliId,
+          },
+        },
+      };
     }
 
     const pendaftaran = await prisma.pendaftaran.findMany({
@@ -27,8 +53,10 @@ router.get("/", authMiddleware, async (req, res) => {
       },
       orderBy: { createdAt: "desc" },
     });
+
     res.json(pendaftaran);
   } catch (error) {
+    console.error("❌ Error fetching pendaftaran:", error);
     res.status(500).json({ message: error.message });
   }
 });
