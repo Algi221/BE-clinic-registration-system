@@ -1,17 +1,23 @@
-const { io } = require("../../server");
+const { getSocketIO } = require("./socket");
 
 /**
  * Emit event ke semua client yang terhubung
  */
 const emitToAll = (event, data) => {
-  io.emit(event, data);
+  const io = getSocketIO();
+  if (io) {
+    io.emit(event, data);
+  }
 };
 
 /**
  * Emit event ke room tertentu (misalnya: 'doctor', 'patient', 'admin')
  */
 const emitToRoom = (room, event, data) => {
-  io.to(room).emit(event, data);
+  const io = getSocketIO();
+  if (io) {
+    io.to(room).emit(event, data);
+  }
 };
 
 /**

@@ -5,6 +5,7 @@ const dotenv = require("dotenv");
 const { PrismaClient } = require("@prisma/client");
 const http = require("http");
 const { Server } = require("socket.io");
+const { setSocketIO } = require("./src/utils/socket");
 
 dotenv.config();
 
@@ -20,6 +21,9 @@ const io = new Server(server, {
     credentials: true,
   },
 });
+
+// Set socket instance agar bisa diakses dari module lain
+setSocketIO(io);
 
 app.use(cors());
 app.use(express.json());
@@ -46,7 +50,7 @@ io.on("connection", (socket) => {
   });
 });
 
-// Routes
+// Routes - Import setelah socket diset untuk menghindari circular dependency
 const authRoutes = require("./src/routes/auth");
 const poliRoutes = require("./src/routes/poli");
 const dokterRoutes = require("./src/routes/dokter");
@@ -70,4 +74,4 @@ server.listen(PORT, () => {
   console.log(`WebSocket server is ready`);
 });
 
-module.exports = { prisma, io };
+module.exports = { prisma };
