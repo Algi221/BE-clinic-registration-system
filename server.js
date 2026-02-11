@@ -1,73 +1,38 @@
 const express = require("express");
+const http = require("http");
 const cors = require("cors");
 const morgan = require("morgan");
 const dotenv = require("dotenv");
-const { PrismaClient } = require("@prisma/client");
-const http = require("http");
-const { Server } = require("socket.io");
+const { initSocket } = require("./src/utils/socket");
 
 dotenv.config();
 
-const prisma = new PrismaClient();
 const app = express();
 const server = http.createServer(app);
 
-// Socket.IO setup dengan CORS
-const io = new Server(server, {
-  cors: {
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
-    methods: ["GET", "POST"],
-    credentials: true,
-  },
-});
-
+// Middleware
 app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
-
-// Socket.IO connection handler
-io.on("connection", (socket) => {
-  console.log(`New client connected: ${socket.id}`);
-
-  // Join room berdasarkan role
-  socket.on("join-room", (room) => {
-    socket.join(room);
-    console.log(`Socket ${socket.id} joined room: ${room}`);
-  });
-
-  // Leave room
-  socket.on("leave-room", (room) => {
-    socket.leave(room);
-    console.log(`Socket ${socket.id} left room: ${room}`);
-  });
-
-  socket.on("disconnect", () => {
-    console.log(`Client disconnected: ${socket.id}`);
-  });
-});
+app.use("/uploads", express.static("public/uploads"));
 
 // Routes
-const authRoutes = require("./src/routes/auth");
-const poliRoutes = require("./src/routes/poli");
-const dokterRoutes = require("./src/routes/dokter");
-const jadwalRoutes = require("./src/routes/jadwal");
-const pendaftaranRoutes = require("./src/routes/pendaftaran");
+app.use("/api/auth", require("./src/routes/auth"));
+app.use("/api/poli", require("./src/routes/poli"));
+app.use("/api/dokter", require("./src/routes/dokter"));
+app.use("/api/jadwal", require("./src/routes/jadwal"));
+app.use("/api/pendaftaran", require("./src/routes/pendaftaran"));
 
-app.use("/api/auth", authRoutes);
-app.use("/api/poli", poliRoutes);
-app.use("/api/dokter", dokterRoutes);
-app.use("/api/jadwal", jadwalRoutes);
-app.use("/api/pendaftaran", pendaftaranRoutes);
-
+// Root route
 app.get("/", (req, res) => {
-  res.json({ message: "Welcome to Clinic Registration API" });
+  res.send("API OceanCare is running...");
 });
+
+// Initialize Socket.io with the server instance
+initSocket(server);
 
 const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-  console.log(`WebSocket server is ready`);
+  console.log(`Server running on port ${PORT}`);
 });
-
-module.exports = { prisma, io };

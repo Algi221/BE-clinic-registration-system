@@ -27,10 +27,10 @@ const authMiddleware = async (req, res, next) => {
 };
 
 const adminMiddleware = (req, res, next) => {
-  if (req.user && req.user.role === "ADMIN") {
+  if (req.user && (req.user.role === "ADMIN" || req.user.role === "DOCTOR")) {
     next();
   } else {
-    res.status(403).json({ message: "Access denied, admin only" });
+    res.status(403).json({ message: "Access denied, admin or doctor only" });
   }
 };
 
