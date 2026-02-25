@@ -41,7 +41,17 @@ router.post("/register", async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(400).json({ message: error.message || "Validation failed" });
+    console.error("Registration error:", error);
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        message: "Validation failed",
+        errors: error.errors.map((e) => ({
+          field: e.path[0],
+          message: e.message,
+        })),
+      });
+    }
+    res.status(400).json({ message: error.message || "Registration failed" });
   }
 });
 
@@ -70,7 +80,8 @@ router.post("/login", async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    console.error("Login error:", error);
+    res.status(500).json({ message: "Server error", detail: error.message });
   }
 });
 
